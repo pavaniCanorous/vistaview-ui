@@ -1,7 +1,74 @@
-import { useRef, useMemo, forwardRef } from 'react';
+import { useRef, useMemo, useState, useEffect, Component, type ReactNode } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Float, MeshDistortMaterial, Sphere, Box, Torus, Icosahedron, Octahedron } from '@react-three/drei';
 import * as THREE from 'three';
+
+// ──────── WebGL Support Detection ────────
+function isWebGLAvailable(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(
+      window.WebGLRenderingContext &&
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+    );
+  } catch {
+    return false;
+  }
+}
+
+// ──────── Error Boundary ────────
+class WebGLErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode; fallback: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+// ──────── CSS Fallback Scene ────────
+function FallbackScene() {
+  return (
+    <div className="absolute inset-0 z-0 overflow-hidden">
+      {/* Animated gradient orbs as fallback for 3D */}
+      <div
+        className="absolute w-[300px] h-[300px] rounded-full opacity-20 animate-pulse"
+        style={{
+          top: '15%',
+          left: '10%',
+          background: 'radial-gradient(circle, hsl(43 72% 55% / 0.4), transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'pulse 4s ease-in-out infinite',
+        }}
+      />
+      <div
+        className="absolute w-[250px] h-[250px] rounded-full opacity-15 animate-pulse"
+        style={{
+          top: '60%',
+          right: '15%',
+          background: 'radial-gradient(circle, hsl(160 60% 30% / 0.4), transparent 70%)',
+          filter: 'blur(50px)',
+          animation: 'pulse 5s ease-in-out infinite 1s',
+        }}
+      />
+      <div
+        className="absolute w-[200px] h-[200px] rounded-full opacity-10 animate-pulse"
+        style={{
+          top: '30%',
+          right: '30%',
+          background: 'radial-gradient(circle, hsl(43 72% 55% / 0.3), transparent 70%)',
+          filter: 'blur(40px)',
+          animation: 'pulse 6s ease-in-out infinite 2s',
+        }}
+      />
+    </div>
+  );
+}
 
 // ──────── Animated Gold Sphere ────────
 function GoldSphere({ position, scale = 1 }: { position: [number, number, number]; scale?: number }) {
@@ -204,38 +271,50 @@ function CameraRig() {
 
 // ──────── Main Scene ────────
 export default function Scene3D() {
+  const [webGLSupported, setWebGLSupported] = useState(true);
+
+  useEffect(() => {
+    setWebGLSupported(isWebGLAvailable());
+  }, []);
+
+  if (!webGLSupported) {
+    return <FallbackScene />;
+  }
+
   return (
     <div className="absolute inset-0 z-0">
-      <Canvas
-        camera={{ position: [0, 0, 9], fov: 55 }}
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        style={{ background: 'transparent' }}
-      >
-        <CameraRig />
-        
-        {/* Volumetric Lighting */}
-        <ambientLight intensity={0.3} />
-        <directionalLight position={[5, 8, 5]} intensity={1.2} color="#c9a84c" />
-        <directionalLight position={[-6, -4, -5]} intensity={0.25} color="#0d6b4f" />
-        <pointLight position={[0, 4, 4]} intensity={0.9} color="#d4a843" distance={15} decay={2} />
-        <pointLight position={[-4, -2, 3]} intensity={0.4} color="#0d6b4f" distance={12} decay={2} />
-        <spotLight position={[3, 6, 5]} angle={0.3} penumbra={0.8} intensity={0.6} color="#c9a84c" />
+      <WebGLErrorBoundary fallback={<FallbackScene />}>
+        <Canvas
+          camera={{ position: [0, 0, 9], fov: 55 }}
+          dpr={[1, 1.5]}
+          gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+          style={{ background: 'transparent' }}
+        >
+          <CameraRig />
+          
+          {/* Volumetric Lighting */}
+          <ambientLight intensity={0.3} />
+          <directionalLight position={[5, 8, 5]} intensity={1.2} color="#c9a84c" />
+          <directionalLight position={[-6, -4, -5]} intensity={0.25} color="#0d6b4f" />
+          <pointLight position={[0, 4, 4]} intensity={0.9} color="#d4a843" distance={15} decay={2} />
+          <pointLight position={[-4, -2, 3]} intensity={0.4} color="#0d6b4f" distance={12} decay={2} />
+          <spotLight position={[3, 6, 5]} angle={0.3} penumbra={0.8} intensity={0.6} color="#c9a84c" />
 
-        {/* Primary Objects */}
-        <GoldSphere position={[-4.5, 2.5, -3]} scale={0.55} />
-        <GoldSphere position={[5, -2, -4]} scale={0.35} />
-        <GlassIcosahedron position={[3.5, 3, -2]} scale={0.7} />
-        <GlassIcosahedron position={[-2.5, -2.5, -3]} scale={0.5} />
-        <GlassBox position={[-5, 0.5, -2]} scale={0.55} />
-        <GoldRing position={[0, 3.5, -5]} scale={1.3} />
-        <GoldRing position={[-5.5, -1, -4]} scale={0.6} />
-        <GoldRing position={[5.5, 1.5, -3]} scale={0.45} />
-        <FloatingOctahedron position={[2, -3, -2]} scale={0.6} />
-        <FloatingOctahedron position={[-3, 3.5, -5]} scale={0.8} />
+          {/* Primary Objects */}
+          <GoldSphere position={[-4.5, 2.5, -3]} scale={0.55} />
+          <GoldSphere position={[5, -2, -4]} scale={0.35} />
+          <GlassIcosahedron position={[3.5, 3, -2]} scale={0.7} />
+          <GlassIcosahedron position={[-2.5, -2.5, -3]} scale={0.5} />
+          <GlassBox position={[-5, 0.5, -2]} scale={0.55} />
+          <GoldRing position={[0, 3.5, -5]} scale={1.3} />
+          <GoldRing position={[-5.5, -1, -4]} scale={0.6} />
+          <GoldRing position={[5.5, 1.5, -3]} scale={0.45} />
+          <FloatingOctahedron position={[2, -3, -2]} scale={0.6} />
+          <FloatingOctahedron position={[-3, 3.5, -5]} scale={0.8} />
 
-        <Particles />
-      </Canvas>
+          <Particles />
+        </Canvas>
+      </WebGLErrorBoundary>
     </div>
   );
 }
