@@ -1,251 +1,323 @@
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
-import { Search, Building2, BookOpen, Sofa, HandshakeIcon, Sparkles, ChevronDown } from 'lucide-react';
+import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
+import { useRef, useState, useEffect } from 'react';
+import { Search, Building2, BookOpen, Sofa, HandshakeIcon, Sparkles, ArrowRight, Play } from 'lucide-react';
 import Scene3D from '@/components/Scene3D';
 import heroBg from '@/assets/hero-bg.jpg';
 
 const services = [
-  { icon: Building2, label: 'Real Estate', delay: 0.1 },
-  { icon: BookOpen, label: 'Product Catalogue', delay: 0.2 },
-  { icon: Sofa, label: 'Interior Design', delay: 0.3 },
-  { icon: HandshakeIcon, label: 'Services', delay: 0.4 },
+  { icon: Building2, label: 'Real Estate', desc: 'Buy & Sell', delay: 0 },
+  { icon: BookOpen, label: 'Product Catalogue', desc: 'Browse All', delay: 0.08 },
+  { icon: Sofa, label: 'Interior Design', desc: 'AI Powered', delay: 0.16 },
+  { icon: HandshakeIcon, label: 'Services', desc: 'Premium', delay: 0.24 },
 ];
 
+const floatingWords = ['Intelligence', 'Innovation', 'Virtual Reality', 'AI-Driven'];
+
 export default function HeroSection() {
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [activeWord, setActiveWord] = useState(0);
+  const [searchFocused, setSearchFocused] = useState(false);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ['start start', 'end start'],
   });
 
-  // Parallax transforms
-  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '40%']);
-  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.2]);
-  const textY = useTransform(scrollYProgress, [0, 1], ['0%', '100%']);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const cardsY = useTransform(scrollYProgress, [0, 1], ['0%', '60%']);
+  // Multi-layer parallax
+  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
+  const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.3]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.4], [0.35, 0]);
+  const contentY = useTransform(scrollYProgress, [0, 1], ['0%', '80%']);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.35], [1, 0]);
+  const cardsY = useTransform(scrollYProgress, [0, 1], ['0%', '40%']);
+  const sceneScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.15]);
+
+  // Rotate floating words
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveWord((prev) => (prev + 1) % floatingWords.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      className="relative min-h-[110vh] flex items-center justify-center overflow-hidden"
     >
-      {/* Background Image with Parallax */}
+      {/* ── Layer 0: Background Image ── */}
       <motion.div className="absolute inset-0 z-0" style={{ y: bgY, scale: bgScale }}>
-        <img src={heroBg} alt="Skyline" className="w-full h-full object-cover opacity-30" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background" />
+        <motion.img
+          src={heroBg}
+          alt="Skyline"
+          className="w-full h-full object-cover"
+          style={{ opacity: bgOpacity }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/60 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/50" />
       </motion.div>
 
-      {/* Animated Background Shapes */}
-      <div className="absolute inset-0 z-[1] overflow-hidden pointer-events-none">
-        {/* Large gold gradient orb */}
+      {/* ── Layer 1: Animated Gradient Mesh ── */}
+      <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden">
         <motion.div
-          className="absolute -top-32 -right-32 w-[700px] h-[700px] rounded-full opacity-[0.08]"
+          className="absolute -top-[20%] -right-[15%] w-[800px] h-[800px] rounded-full"
           style={{
-            background: 'radial-gradient(circle, hsl(43 72% 55%), transparent 70%)',
-            filter: 'blur(80px)',
+            background: 'radial-gradient(circle, hsl(43 72% 55% / 0.07), transparent 65%)',
+            filter: 'blur(100px)',
           }}
-          animate={{ scale: [1, 1.15, 1], rotate: [0, 45, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{
+            x: [0, 60, 0],
+            y: [0, -40, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
         />
-        {/* Emerald gradient orb */}
         <motion.div
-          className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.1]"
+          className="absolute -bottom-[20%] -left-[15%] w-[700px] h-[700px] rounded-full"
           style={{
-            background: 'radial-gradient(circle, hsl(160 60% 30%), transparent 70%)',
-            filter: 'blur(80px)',
+            background: 'radial-gradient(circle, hsl(160 60% 25% / 0.08), transparent 65%)',
+            filter: 'blur(100px)',
           }}
-          animate={{ scale: [1.1, 1, 1.1], rotate: [0, -30, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{
+            x: [0, -40, 0],
+            y: [0, 50, 0],
+            scale: [1.1, 1, 1.1],
+          }}
+          transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
         />
-        {/* Mid accent orb */}
+        {/* Horizontal light beam */}
         <motion.div
-          className="absolute top-1/3 left-1/4 w-[300px] h-[300px] rounded-full opacity-[0.05]"
+          className="absolute top-[45%] left-0 right-0 h-px"
           style={{
-            background: 'radial-gradient(circle, hsl(43 80% 70%), transparent 70%)',
-            filter: 'blur(60px)',
+            background: 'linear-gradient(90deg, transparent 0%, hsl(43 72% 55% / 0.08) 30%, hsl(43 72% 55% / 0.15) 50%, hsl(43 72% 55% / 0.08) 70%, transparent 100%)',
           }}
-          animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+          animate={{ opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
         />
       </div>
 
-      {/* 3D Scene */}
-      <Scene3D />
+      {/* ── Layer 2: 3D Scene ── */}
+      <motion.div className="absolute inset-0 z-[2]" style={{ scale: sceneScale }}>
+        <Scene3D />
+      </motion.div>
 
-      {/* Floating Decorative Elements */}
-      <motion.div
-        className="absolute top-20 left-[10%] w-3 h-3 rounded-full bg-primary/30 pointer-events-none z-[2]"
-        animate={{ y: [0, -30, 0], x: [0, 15, 0], opacity: [0.3, 0.7, 0.3] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute top-[30%] right-[15%] w-2 h-2 rounded-full bg-primary/20 pointer-events-none z-[2]"
-        animate={{ y: [0, 20, 0], x: [0, -10, 0], opacity: [0.2, 0.5, 0.2] }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-      />
-      <motion.div
-        className="absolute bottom-[25%] left-[20%] w-4 h-4 rounded-full bg-accent/20 pointer-events-none z-[2]"
-        animate={{ y: [0, -20, 0], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-      />
-      <motion.div
-        className="absolute top-[50%] right-[8%] w-1.5 h-1.5 rounded-full bg-primary/40 pointer-events-none z-[2]"
-        animate={{ y: [0, -25, 0], x: [0, 10, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-      />
+      {/* ── Layer 3: Floating Grid Lines ── */}
+      <div className="absolute inset-0 z-[3] pointer-events-none opacity-[0.03]">
+        <div className="absolute inset-0"
+          style={{
+            backgroundImage: `
+              linear-gradient(hsl(43 72% 55% / 0.3) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(43 72% 55% / 0.3) 1px, transparent 1px)
+            `,
+            backgroundSize: '80px 80px',
+          }}
+        />
+      </div>
 
-      {/* Content with Parallax */}
+      {/* ── Layer 4: Content ── */}
       <motion.div
-        className="relative z-10 text-center px-4 max-w-5xl mx-auto"
-        style={{ y: textY, opacity }}
+        className="relative z-10 text-center px-4 max-w-6xl mx-auto pt-20"
+        style={{ y: contentY, opacity: contentOpacity }}
       >
-        {/* Badge */}
+        {/* Badge with rotating words */}
         <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 1, delay: 0.1 }}
+          className="mb-10"
         >
-          <span className="inline-flex items-center gap-2 glass-panel px-5 py-2.5 rounded-full mb-8 text-sm font-sans">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-primary/90 tracking-[0.2em] uppercase">AI-Powered Platform</span>
-          </span>
+          <div className="inline-flex items-center gap-3 glass-panel px-6 py-3 rounded-full">
+            <motion.div
+              className="w-2 h-2 rounded-full bg-primary"
+              animate={{ scale: [1, 1.4, 1], opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+            <span className="text-primary/80 text-xs font-sans tracking-[0.25em] uppercase">
+              Powered by
+            </span>
+            <div className="h-4 overflow-hidden w-24">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={activeWord}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -20, opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="block text-primary text-xs font-sans font-semibold tracking-wider uppercase"
+                >
+                  {floatingWords[activeWord]}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+          </div>
         </motion.div>
 
-        {/* Main Heading with staggered animation */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <h1 className="font-display text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold mb-6 leading-[0.95]">
-            <motion.span
-              className="gold-text text-glow inline-block"
-              initial={{ opacity: 0, y: 60, rotateX: -30 }}
-              animate={{ opacity: 1, y: 0, rotateX: 0 }}
-              transition={{ duration: 1, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+        {/* Title — Split with emphasis */}
+        <div className="mb-8">
+          <motion.h1
+            className="font-display text-5xl sm:text-7xl md:text-8xl lg:text-[8.5rem] font-bold leading-[0.9] tracking-tight"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <motion.div
+              className="overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
             >
-              The Amazon
-            </motion.span>
-            <br />
-            <motion.span
-              className="text-foreground inline-block"
-              initial={{ opacity: 0, y: 60, rotateX: -30 }}
-              animate={{ opacity: 1, y: 0, rotateX: 0 }}
-              transition={{ duration: 1, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
-              of Real Estate
-            </motion.span>
-          </h1>
-        </motion.div>
+              <motion.span
+                className="gold-text text-glow inline-block"
+                initial={{ y: '100%', rotateX: -40 }}
+                animate={{ y: '0%', rotateX: 0 }}
+                transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              >
+                The Amazon
+              </motion.span>
+            </motion.div>
+            <motion.div className="overflow-hidden mt-1">
+              <motion.span
+                className="text-foreground inline-block"
+                initial={{ y: '100%', rotateX: -40 }}
+                animate={{ y: '0%', rotateX: 0 }}
+                transition={{ duration: 1.2, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              >
+                of Real Estate
+              </motion.span>
+            </motion.div>
+          </motion.h1>
+        </div>
 
-        {/* Subtitle with reveal */}
+        {/* Subtitle with decorative lines */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          transition={{ duration: 0.8, delay: 0.9 }}
+          className="flex items-center justify-center gap-4 mb-14"
         >
-          <p className="text-foreground/60 text-lg sm:text-xl md:text-2xl max-w-2xl mx-auto mb-12 font-sans leading-relaxed">
+          <div className="hidden sm:block h-px w-16 bg-gradient-to-r from-transparent to-primary/30" />
+          <p className="text-foreground/50 text-base sm:text-lg md:text-xl max-w-xl font-sans leading-relaxed">
             World&apos;s #1 Real Estate Intelligence &amp; Virtual Experience Platform
           </p>
+          <div className="hidden sm:block h-px w-16 bg-gradient-to-l from-transparent to-primary/30" />
         </motion.div>
 
-        {/* Service Cards with Stagger */}
+        {/* Service Cards — Horizontal strip */}
         <motion.div
-          className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-12"
+          className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-12"
           style={{ y: cardsY }}
         >
-          {services.map((service, index) => (
+          {services.map((service) => (
             <motion.div
               key={service.label}
-              initial={{ opacity: 0, y: 40, scale: 0.8 }}
+              initial={{ opacity: 0, y: 50, scale: 0.85 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{
-                duration: 0.6,
-                delay: 1 + service.delay,
-                ease: [0.25, 0.46, 0.45, 0.94],
+                duration: 0.7,
+                delay: 1.1 + service.delay,
+                ease: [0.16, 1, 0.3, 1],
               }}
             >
               <motion.div
-                className="glass-panel relative group cursor-pointer px-6 py-4 sm:px-8 sm:py-5 rounded-2xl flex flex-col items-center gap-3 min-w-[120px]"
+                className="glass-panel relative group cursor-pointer rounded-2xl overflow-hidden"
                 whileHover={{
-                  scale: 1.08,
-                  y: -8,
-                  boxShadow: '0 20px 60px hsl(43 72% 55% / 0.15)',
+                  scale: 1.06,
+                  y: -6,
                 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               >
-                {/* Shimmer effect on hover */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                {/* Top glow on hover */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                <div className="relative z-10 w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 group-hover:border-primary/40 transition-all duration-300">
-                  <service.icon className="w-6 h-6 text-primary" />
+                <div className="px-5 py-4 sm:px-7 sm:py-5 flex flex-col items-center gap-2.5 min-w-[100px] sm:min-w-[130px]">
+                  <div className="w-11 h-11 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center group-hover:bg-primary/20 group-hover:border-primary/35 group-hover:shadow-[0_0_20px_hsl(43_72%_55%/0.15)] transition-all duration-400">
+                    <service.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="text-center">
+                    <span className="block text-foreground/80 text-xs sm:text-sm font-sans font-medium group-hover:text-foreground transition-colors duration-300">
+                      {service.label}
+                    </span>
+                    <span className="block text-[10px] text-muted-foreground font-sans mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {service.desc}
+                    </span>
+                  </div>
                 </div>
-
-                <span className="relative z-10 text-foreground/80 text-sm font-sans font-medium group-hover:text-foreground transition-colors duration-300">
-                  {service.label}
-                </span>
               </motion.div>
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Search Bar with animation */}
+        {/* Search Bar — Elevated design */}
         <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
+          initial={{ opacity: 0, y: 40, scale: 0.92 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, delay: 1.5 }}
+          transition={{ duration: 0.9, delay: 1.6, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-2xl mx-auto"
         >
-          <div className="relative group">
-            {/* Animated border glow */}
-            <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/30 via-primary/50 to-primary/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
+          <motion.div
+            className="relative"
+            animate={searchFocused ? { scale: 1.02 } : { scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Outer glow ring */}
+            <motion.div
+              className="absolute -inset-[2px] rounded-2xl"
+              style={{
+                background: 'linear-gradient(135deg, hsl(43 72% 55% / 0.2), hsl(160 60% 30% / 0.1), hsl(43 72% 55% / 0.2))',
+              }}
+              animate={searchFocused ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ duration: 0.4 }}
+            />
 
-            <div className="relative glass-panel rounded-2xl px-5 py-3.5 flex items-center gap-4">
+            <div className="relative glass-panel rounded-2xl px-4 sm:px-6 py-3.5 flex items-center gap-3">
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xl">🤖</span>
-                <span className="text-foreground/40 text-sm font-sans hidden sm:inline">AI Search</span>
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                </div>
               </div>
 
-              <input
-                type="text"
-                placeholder="Ask AI to find your dream property..."
-                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-foreground/30 font-sans text-sm sm:text-base"
-              />
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Ask AI to find your dream property..."
+                  className="w-full bg-transparent border-none outline-none text-foreground placeholder:text-foreground/25 font-sans text-sm sm:text-base"
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                />
+              </div>
 
               <motion.button
-                className="gold-gradient text-primary-foreground px-5 py-2.5 rounded-xl text-sm font-semibold font-sans flex items-center gap-2 shrink-0"
-                whileHover={{ scale: 1.05, boxShadow: '0 0 30px hsl(43 72% 55% / 0.3)' }}
+                className="gold-gradient text-primary-foreground px-4 sm:px-6 py-2.5 rounded-xl text-sm font-semibold font-sans flex items-center gap-2 shrink-0"
+                whileHover={{ scale: 1.05, boxShadow: '0 0 35px hsl(43 72% 55% / 0.35)' }}
                 whileTap={{ scale: 0.95 }}
               >
                 <Search className="w-4 h-4" />
                 <span className="hidden sm:inline">Search</span>
               </motion.button>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </motion.div>
 
-      {/* Scroll Indicator */}
+      {/* ── Scroll Indicator ── */}
       <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2"
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 2.2, duration: 1 }}
+        transition={{ delay: 2.5, duration: 1 }}
       >
         <motion.div
-          animate={{ y: [0, 8, 0] }}
+          animate={{ y: [0, 6, 0] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
           className="flex flex-col items-center gap-2"
         >
-          <span className="text-muted-foreground text-xs font-sans tracking-widest uppercase">
-            Scroll to explore
+          <span className="text-muted-foreground/60 text-[10px] font-sans tracking-[0.3em] uppercase">
+            Explore
           </span>
-          <div className="w-6 h-10 border border-primary/30 rounded-full flex justify-center pt-2">
+          <div className="w-5 h-9 border border-primary/25 rounded-full flex justify-center pt-1.5">
             <motion.div
-              className="w-1 h-2.5 bg-primary/50 rounded-full"
-              animate={{ y: [0, 12, 0], opacity: [1, 0.3, 1] }}
+              className="w-0.5 h-2 bg-primary/40 rounded-full"
+              animate={{ y: [0, 14, 0], opacity: [0.8, 0.2, 0.8] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
           </div>
